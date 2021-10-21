@@ -1,0 +1,36 @@
+name: Schedule bot monthly
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # Every first day of the month
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Get dotenv secrets
+      run: |
+        touch .env
+        echo WHITELIST_GIST_ID = ${{ secrets.WHITELIST_GIST_ID }} >> .env 
+        echo TWITTER_API_KEY = ${{ secrets.TWITTER_API_KEY }} >> .env
+        echo TWITTER_API_KEY_SECRET = ${{ secrets.TWITTER_API_KEY_SECRET }} >> .env
+        echo TWITTER_ACCESS_TOKEN = ${{ secrets.TWITTER_ACCESS_TOKEN }} >> .env
+        echo TWITTER_ACCESS_TOKEN_SECRET = ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }} >> .env
+    - name: Clean install npm dependencies
+      run: npm ci
+    - name: Build project
+      run: npm run build
+    - name: Run script
+      run: node dist
+    - name: Keep workflow alive
+      uses: gautamkrishnar/keepalive-workflow@master
